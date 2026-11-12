@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>RUMBO AL PRIMAVERA SOUND 2026: GORILLAZ × THE STROKES</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'acid-green': '#9dff2e',
+                        'cyber-purple': '#7a2cff',
+                        'dark-void': '#090a0f',
+                        'strokes-red': '#ff2a2a',
+                        'rock-bone': '#f1ead8',
+                        'arcade-card': '#121520'
+                    },
+                    fontFamily: {
+                        pixel: ['"Press Start 2P"', 'monospace'],
+                        header: ['"Bowlby One"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Strict Mobile App Shell Styling */
+        html, body {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #090a0f;
+            color: #f1ead8;
+            font-family: 'Press Start 2P', monospace;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: none;
+        }
+
+        /* CRT Filter overlay */
+        .crt-overlay {
+            position: relative;
+        }
+        .crt-overlay::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 10;
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        .crt-overlay.disabled::after { display: none; }
+
+        /* Crisp Pixel Rendering */
+        canvas {
+            image-rendering: optimizeSpeed;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: pixelated;
+            -ms-interpolation-mode: nearest-neighbor;
+        }
+
+        /* Neon Text Glows */
+        .glow-green { text-shadow: 0 0 8px #9dff2e; }
+        .glow-red { text-shadow: 0 0 8px #ff2a2a; }
+        .glow-purple { text-shadow: 0 0 8px #7a2cff; }
+
+        /* Ergonomic Touch Buttons */
+        .touch-btn {
+            position: relative;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            transition: transform 0.05s ease, background-color 0.1s ease;
+        }
+        .touch-btn:active, .touch-btn.active {
+            transform: scale(0.94);
+            filter: brightness(1.2);
+        }
+
+        /* Animated Ticker */
+        @keyframes ticker {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .animate-ticker {
+            display: inline-block;
+            white-space: nowrap;
+            animation: ticker 22s linear infinite;
+        }
+    </style>
+</head>
+<body class="w-full h-full flex flex-col justify-between p-2 box-border select-none overflow-hidden">
+
+    <!-- TOP MOBILE BAR (Compact Info & Audio Jukebox) -->
+    <header class="w-full bg-arcade-card border-2 border-cyber-purple rounded-lg p-2 shadow-lg flex-shrink-0 z-30">
+        <div class="flex justify-between items-center gap-2">
+            <!-- Festival Header & Countdown -->
+            <div class="flex flex-col">
+                <span class="text-[9px] sm:text-xs text-acid-green font-header glow-green">
+                    PRIMAVERA SOUND 2026
+                </span>
+                <span id="countdown" class="text-[8px] text-strokes-red font-pixel mt-0.5">
+                    00d : 00h : 00m
+                </span>
+            </div>
+
+            <!-- Track Selector & Audio Quick Controls -->
+            <div class="flex items-center gap-1.5">
+                <select id="jukeboxSelect" onchange="changeTrack(this.value)" class="bg-dark-void border border-acid-green text-acid-green text-[9px] font-pixel p-1.5 rounded outline-none max-w-[150px]">
+                    <option value="0">1. Feel Good Inc.</option>
+                    <option value="1">2. Clint Eastwood</option>
+                    <option value="2">3. Melancholy Hill</option>
+                    <option value="3">4. Reptilia</option>
+                    <option value="4">5. Adults Are Talking</option>
+                </select>
+
+                <button id="muteBtn" onclick="toggleMute()" class="touch-btn bg-dark-void border border-strokes-red text-strokes-red text-[9px] px-2 py-1.5 rounded font-pixel">
+                    🔊
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CENTER GAME AREA (Canvas Container & Screens) -->
+    <main class="w-full flex-1 min-h-0 flex justify-center items-center relative my-1">
+        <div id="canvasContainer" class="crt-overlay relative w-full h-full bg-black border-2 border-rock-bone rounded-lg shadow-2xl overflow-hidden flex justify-center items-center">
+            
+            <canvas id="gameCanvas" class="w-full h-full block object-contain max-w-full max-h-full"></canvas>
+
+            <!-- START SCREEN OVERLAY -->
+            <div id="startOverlay" class="absolute inset-0 bg-dark-void/90 backdrop-blur-md flex flex-col justify-center items-center p-4 text-center z-40">
+                <h1 class="text-xl sm:text-3xl font-header text-acid-green mb-1 glow-green">
+                    RUMBO AL PRIMAVERA SOUND
+                </h1>
+                <p class="text-[9px] sm:text-xs text-strokes-red mb-4 font-pixel max-w-xs leading-relaxed">
+                    28-29.11 • GORILLAZ × THE STROKES
+                </p>
+
+                <!-- Character Selection -->
+                <div class="grid grid-cols-2 gap-3 mb-4 w-full max-w-xs">
+                    <div id="select2D" onclick="selectCharacter('2D')" class="bg-arcade-card border-2 border-acid-green rounded-lg p-2.5 cursor-pointer flex flex-col items-center">
+                        <span class="text-xl mb-1">🐒</span>
+                        <span class="text-[10px] text-acid-green font-bold">2D (Gorillaz)</span>
+                        <span class="text-[8px] text-gray-400 mt-0.5">Doble Salto Ágil</span>
+                    </div>
+
+                    <div id="selectJulian" onclick="selectCharacter('Julian')" class="bg-arcade-card border-2 border-gray-600 rounded-lg p-2.5 cursor-pointer flex flex-col items-center opacity-70">
+                        <span class="text-xl mb-1">🎸</span>
+                        <span class="text-[10px] text-rock-bone font-bold">Julian (Strokes)</span>
+                        <span class="text-[8px] text-gray-400 mt-0.5">Deslizar Pro</span>
+                    </div>
+                </div>
+
+                <button onclick="startGame()" class="touch-btn bg-acid-green text-dark-void border-2 border-white px-6 py-3.5 rounded-xl text-xs font-bold font-header tracking-wider shadow-lg w-full max-w-xs">
+                    ► EMPEZAR A CORRER
+                </button>
+
+                <p class="text-[8px] text-gray-400 font-pixel mt-3">
+                    [TOCA LOS BOTONES INFERIORES O DESLIZA EN PANTALLA]
+                </p>
+            </div>
+
+            <!-- GAME OVER OVERLAY -->
+            <div id="gameOverOverlay" class="hidden absolute inset-0 bg-dark-void/95 backdrop-blur-md flex flex-col justify-center items-center p-4 text-center z-40">
+                <h2 class="text-2xl font-header text-strokes-red mb-1 glow-red">GAME OVER</h2>
+                <p id="gameOverSub" class="text-[9px] text-rock-bone mb-3 font-pixel">Te chocaste camino al escenario...</p>
+
+                <div class="bg-arcade-card border border-cyber-purple rounded-lg p-3 mb-4 w-full max-w-xs text-left text-[9px]">
+                    <div class="flex justify-between mb-1.5">
+                        <span class="text-gray-400">Distancia:</span>
+                        <span id="finalDistance" class="text-acid-green font-bold">0m</span>
+                    </div>
+                    <div class="flex justify-between mb-1.5">
+                        <span class="text-gray-400">Puntaje:</span>
+                        <span id="finalScore" class="text-strokes-red font-bold">0 PTS</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Mejor Récord:</span>
+                        <span id="highScoreText" class="text-yellow-400 font-bold">0 PTS</span>
+                    </div>
+                </div>
+
+                <button onclick="restartGame()" class="touch-btn bg-acid-green text-dark-void px-6 py-3 rounded-xl text-xs font-bold font-header w-full max-w-xs">
+                    ↻ REINTENTAR
+                </button>
+            </div>
+
+            <!-- VICTORY OVERLAY -->
+            <div id="victoryOverlay" class="hidden absolute inset-0 bg-cyber-purple/95 backdrop-blur-md flex flex-col justify-center items-center p-4 text-center z-40">
+                <h2 class="text-xl font-header text-acid-green mb-1 glow-green animate-bounce">
+                    ¡ESCENARIO PRINCIPAL!
+                </h2>
+                <p class="text-[9px] text-rock-bone mb-3 font-pixel max-w-xs">
+                    ¡Llegaste a los 2500m del Primavera Sound! Gorillaz y The Strokes abren el festival 🎆🎸
+                </p>
+
+                <div class="flex gap-2 w-full max-w-xs mt-2">
+                    <button onclick="continueEndless()" class="touch-btn bg-cyber-purple border border-acid-green text-white flex-1 py-3 rounded-xl text-[9px] font-pixel">
+                        MODO INFINITO ∞
+                    </button>
+                    <button onclick="restartGame()" class="touch-btn bg-acid-green text-dark-void flex-1 py-3 rounded-xl text-[9px] font-pixel font-bold">
+                        REINICIAR
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- BOTTOM ERGONOMIC ARCADE CONTROLLER (Dual Thumb Mobile Controls) -->
+    <footer class="w-full bg-arcade-card border-2 border-cyber-purple rounded-xl p-2 flex justify-between items-center gap-2 flex-shrink-0 z-30">
+        <!-- Left Thumb: Slide & Switch Character -->
+        <div class="flex gap-1.5 flex-1 max-w-[50%]">
+            <button id="btnSlide" class="touch-btn bg-strokes-red text-white border-2 border-rock-bone rounded-lg flex-1 py-3.5 flex flex-col items-center justify-center shadow-lg active:bg-red-700">
+                <span class="text-sm">⬇️</span>
+                <span class="text-[8px] font-pixel mt-0.5">AGACHARSE</span>
+            </button>
+            <button id="btnSwitch" class="touch-btn bg-dark-void text-acid-green border-2 border-acid-green rounded-lg px-2 py-3.5 flex flex-col items-center justify-center">
+                <span class="text-sm">🔄</span>
+                <span class="text-[7px] font-pixel mt-0.5">BANDA</span>
+            </button>
+        </div>
+
+        <!-- Right Thumb: Jump (Primary Action) -->
+        <div class="flex-1 max-w-[50%]">
+            <button id="btnJump" class="touch-btn bg-acid-green text-dark-void border-2 border-rock-bone rounded-lg w-full py-3.5 flex flex-col items-center justify-center shadow-lg font-bold">
+                <span class="text-sm">⬆️</span>
+                <span class="text-[9px] font-pixel mt-0.5">SALTAR / DOBLE</span>
+            </button>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT GAME ENGINE -->
+    <script>
+        /* ==========================================================================
+           1. CANVAS & MOBILE INITIALIZATION
+           ========================================================================== */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+
+        // Auto-resize Canvas to maintain internal 800x400 aspect ratio crisply
+        function resizeCanvas() {
+            const container = document.getElementById('canvasContainer');
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            canvas.width = 800;
+            canvas.height = 400;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let highScore = parseInt(localStorage.getItem('ps_highscore') || '0');
+        let gameState = 'MENU';
+        let distance = 0;
+        let score = 0;
+        let speed = 5.0;
+        let baseSpeed = 5.0;
+        let isEndless = false;
+        let vipTimer = 0;
+        let frameCount = 0;
+
+        // Player state
+        const player = {
+            type: '2D', // '2D' or 'Julian'
+            x: 80,
+            y: 280,
+            width: 32,
+            height: 48,
+            vy: 0,
+            gravity: 0.7,
+            jumpStrength: -12.0,
+            isGrounded: false,
+            doubleJumpAvailable: true,
+            isSliding: false,
+            animFrame: 0,
+            animTimer: 0
+        };
+
+        let obstacles = [];
+        let collectibles = [];
+        let particles = [];
+        let floatingTexts = [];
+
+        /* ==========================================================================
+           2. 4-CHANNEL POLYPHONIC CHIPTUNE SYNTHESIZER (Web Audio API)
+           ========================================================================== */
+        let audioCtx = null;
+        let isMuted = false;
+        let currentTrackIndex = 0;
+        let isAudioUnlocked = false;
+
+        // Frequencies Map
+        const N = {
+            'C2': 65.41, 'D2': 73.42, 'Eb2': 77.78, 'E2': 82.41, 'F2': 87.31, 'F#2': 92.50, 'G2': 98.00, 'G#2': 103.83, 'A2': 110.00, 'Bb2': 116.54, 'B2': 123.47,
+            'C3': 130.81, 'C#3': 138.59, 'D3': 146.83, 'Eb3': 155.56, 'E3': 164.81, 'F3': 174.61, 'F#3': 185.00, 'G3': 196.00, 'G#3': 207.65, 'A3': 220.00, 'Bb3': 233.08, 'B3': 246.94,
+            'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'Eb4': 311.13, 'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00, 'Bb4': 466.16, 'B4': 493.88,
+            'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'Eb5': 622.25, 'E5': 659.25, 'F5': 698.46, 'F#5': 739.99, 'G5': 783.99, 'A5': 880.00, '-': 0
+        };
+
+        // Authentic Song Sequences (4 Channels: Lead, Harmony/Rhythm, Bass, Drums)
+        const SONGS = [
+            {
+                name: '1. Feel Good Inc. (Gorillaz)',
+                bpm: 138,
+                ch0: ['Eb2','-','Eb2','F#2','-','G2','-','C3','B2','-','A2','G2','Eb2','-','C2','Eb2'], // Iconic Bass Riff
+                ch1: ['Eb4','F#4','Bb4','Eb5','Eb4','F#4','Bb4','Eb5','C4','Eb4','G4','C5','B3','D4','F#4','B4'], // Chorus Synth Chords
+                ch2: ['Bb4','-','Bb4','C#5','-','Eb5','-','C#5','Bb4','-','G#4','F#4','Eb4','-','-','-'], // Vocal Melody
+                ch3: ['K','S','K','S','K','S','K','S','K','S','K','S','K','S','K','S'] // Hip-hop Drums
+            },
+            {
+                name: '2. Clint Eastwood (Gorillaz)',
+                bpm: 132,
+                ch0: ['Eb3','Eb3','-','Eb3','F#3','F#3','-','F#3','Ab3','Ab3','-','Ab3','F#3','-','Eb3','-'], // Dub Bassline
+                ch1: ['Eb4','C#4','B3','F#3','B3','C#4','Eb4','-','Eb4','C#4','B3','F#3','B3','C#4','-','-'], // Melodica Riff
+                ch2: ['Eb5','-','Eb5','-','F#5','-','Eb5','-','Ab5','-','F#5','-','Eb5','-','C#5','-'], // Synth Arp
+                ch3: ['K','-','S','-','K','K','S','-','K','-','S','-','K','K','S','-']
+            },
+            {
+                name: '3. On Melancholy Hill (Gorillaz)',
+                bpm: 120,
+                ch0: ['D3','D3','A2','A2','B2','B2','F#2','F#2','G2','G2','D2','D2','G2','G2','A2','A2'], // Bass progression
+                ch1: ['D4','F#4','A4','D5','A3','C#4','E4','A4','B3','D4','F#4','B4','G3','B3','D4','G4'], // Warm Synth Chords
+                ch2: ['F#5','-','E5','-','D5','-','C#5','-','B4','-','A4','-','B4','-','C#5','-'], // Melodic Lead
+                ch3: ['K','-','S','-','K','-','S','-','K','-','S','-','K','-','S','-']
+            },
+            {
+                name: '4. Reptilia (The Strokes)',
+                bpm: 158,
+                ch0: ['B2','B2','B2','B2','G2','G2','G2','G2','D2','D2','D2','D2','A2','A2','A2','A2'], // Fast 8th Bass
+                ch1: ['F#4','F#4','B4','F#4','G4','G4','B4','G4','F#4','F#4','A4','F#4','E4','E4','A4','E4'], // Dual Guitars
+                ch2: ['B5','-','F#5','-','D5','-','B4','-','A5','-','F#5','-','D5','-','A4','-'], // Fast Solo Riff
+                ch3: ['K','S','K','S','K','S','K','S','K','S','K','S','K','S','K','S']
+            },
+            {
+                name: '5. The Adults Are Talking (The Strokes)',
+                bpm: 164,
+                ch0: ['F3','F3','F3','F3','C3','C3','C3','C3','Dm3','Dm3','Dm3','Dm3','Bb2','Bb2','Bb2','Bb2'], // NYC Bass groove
+                ch1: ['F4','A4','C5','F4','E4','G4','C5','E4','D4','F4','A4','D4','D4','F4','Bb4','D4'], // Staccato Guitar Riff
+                ch2: ['C5','-','A4','-','F4','-','G4','-','A4','-','F4','-','D4','-','C4','-'], // Vocal Melody
+                ch3: ['K','S','K','S','K','S','K','S','K','S','K','S','K','S','K','S']
+            }
+        ];
+
+        let songStep = 0;
+        let musicTimer = null;
+
+        // Auto-unlock Web Audio on mobile touch
+        function unlockAudio() {
+            if (!audioCtx) {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioCtx();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            isAudioUnlocked = true;
+            if (!musicTimer) startSequencer();
+        }
+        window.addEventListener('pointerdown', unlockAudio, { once: false });
+        window.addEventListener('touchstart', unlockAudio, { once: false });
+
+        function playNote(freq, type = 'square', duration = 0.12, gainVal = 0.08) {
+            if (!audioCtx || isMuted || freq === 0 || !isAudioUnlocked) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+            gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playNoise(duration = 0.05, gainVal = 0.06) {
+            if (!audioCtx || isMuted || !isAudioUnlocked) return;
+            const bufferSize = audioCtx.sampleRate * duration;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            noise.connect(gain);
+            gain.connect(audioCtx.destination);
+            noise.start();
+        }
+
+        function startSequencer() {
+            if (musicTimer) clearInterval(musicTimer);
+            const song = SONGS[currentTrackIndex];
+            const interval = (60 / song.bpm / 4) * 1000;
+
+            musicTimer = setInterval(() => {
+                if (gameState === 'PLAYING') {
+                    const n0 = song.ch0[songStep % song.ch0.length];
+                    if (n0 && n0 !== '-') playNote(N[n0] || 100, 'triangle', 0.18, 0.12);
+
+                    const n1 = song.ch1[songStep % song.ch1.length];
+                    if (n1 && n1 !== '-') playNote(N[n1] || 200, 'square', 0.12, 0.06);
+
+                    const n2 = song.ch2[songStep % song.ch2.length];
+                    if (n2 && n2 !== '-') playNote(N[n2] || 300, 'square', 0.14, 0.08);
+
+                    const n3 = song.ch3[songStep % song.ch3.length];
+                    if (n3 === 'K') playNote(75, 'sine', 0.08, 0.14);
+                    if (n3 === 'S') playNoise(0.05, 0.07);
+
+                    songStep++;
+                }
+            }, interval);
+        }
+
+        function playSFX(type) {
+            if (!audioCtx || isMuted || !isAudioUnlocked) return;
+            if (type === 'jump') {
+                playNote(280, 'square', 0.08, 0.12);
+                setTimeout(() => playNote(480, 'square', 0.1, 0.12), 40);
+            } else if (type === 'doublejump') {
+                playNote(500, 'square', 0.08, 0.12);
+                setTimeout(() => playNote(800, 'square', 0.1, 0.12), 40);
+            } else if (type === 'slide') {
+                playNote(160, 'triangle', 0.12, 0.1);
+            } else if (type === 'collect') {
+                playNote(600, 'square', 0.06, 0.12);
+                setTimeout(() => playNote(950, 'square', 0.08, 0.12), 50);
+            } else if (type === 'powerup') {
+                [400, 600, 800, 1000].forEach((f, i) => setTimeout(() => playNote(f, 'square', 0.08, 0.12), i * 40));
+            } else if (type === 'hit') {
+                playNoise(0.2, 0.3);
+            } else if (type === 'switch') {
+                playNote(350, 'triangle', 0.08, 0.12);
+                setTimeout(() => playNote(650, 'triangle', 0.08, 0.12), 50);
+            }
+        }
+
+        function changeTrack(index) {
+            currentTrackIndex = parseInt(index);
+            songStep = 0;
+            startSequencer();
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById('muteBtn').innerText = isMuted ? '🔇' : '🔊';
+        }
+
+        /* ==========================================================================
+           3. SPRITES & PARALLAX BACKGROUND
+           ========================================================================== */
+        function drawPixelMatrix(ctx, matrix, x, y, pixelSize, colorMap) {
+            for (let r = 0; r < matrix.length; r++) {
+                for (let c = 0; c < matrix[r].length; c++) {
+                    const key = matrix[r][c];
+                    if (key !== 0 && colorMap[key]) {
+                        ctx.fillStyle = colorMap[key];
+                        ctx.fillRect(x + c * pixelSize, y + r * pixelSize, pixelSize, pixelSize);
+                    }
+                }
+            }
+        }
+
+        const colors2D = { 1: '#00d0ff', 2: '#000', 3: '#ff8877', 4: '#ff2a2a', 5: '#1a2b4c', 6: '#fff' };
+        const colorsJulian = { 1: '#2b1d0c', 2: '#000', 3: '#ffccaa', 4: '#fff', 5: '#111', 6: '#334466' };
+
+        const sprite2D = [
+            [0,0,1,1,1,1,0,0],[0,1,1,1,1,1,1,0],[0,0,3,3,3,3,0,0],[0,0,2,3,2,3,0,0],
+            [0,4,4,4,4,4,4,0],[4,4,4,2,2,4,4,4],[0,0,5,5,5,5,0,0],[0,0,6,6,0,6,6,0]
+        ];
+
+        const spriteJulian = [
+            [0,0,1,1,1,1,0,0],[0,1,1,1,1,1,1,0],[0,2,2,3,2,2,3,0],[0,0,3,3,3,3,0,0],
+            [0,5,5,5,5,5,5,0],[5,5,5,4,4,5,5,5],[0,0,6,6,6,6,0,0],[0,6,6,0,0,6,6,0]
+        ];
+
+        let bgOffset = 0;
+        function updateBackground() {
+            bgOffset = (bgOffset + speed) % 800;
+        }
+
+        function drawBackground() {
+            const isGorillazTrack = currentTrackIndex < 3;
+            ctx.fillStyle = isGorillazTrack ? '#090a0f' : '#140a1d';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Parallax Moon / Neon Sun
+            ctx.fillStyle = isGorillazTrack ? '#9dff2e' : '#ff2a2a';
+            ctx.beginPath();
+            ctx.arc(680, 70, 30, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Parallax Skyscrapers / Windmill
+            ctx.fillStyle = isGorillazTrack ? '#121524' : '#22112e';
+            for (let i = -1; i < 5; i++) {
+                let x = i * 220 - (bgOffset * 0.4);
+                ctx.fillRect(x, 180, 140, 160);
+                ctx.fillStyle = isGorillazTrack ? '#9dff2e' : '#ff2a2a';
+                ctx.fillRect(x + 20, 200, 12, 16);
+                ctx.fillRect(x + 80, 200, 12, 16);
+                ctx.fillStyle = isGorillazTrack ? '#121524' : '#22112e';
+            }
+
+            // Road Ground
+            ctx.fillStyle = '#181b26';
+            ctx.fillRect(0, 330, canvas.width, 70);
+            ctx.fillStyle = isGorillazTrack ? '#9dff2e' : '#ff2a2a';
+            ctx.fillRect(0, 330, canvas.width, 4);
+
+            // Moving asphalt stripes
+            ctx.fillStyle = '#f1ead8';
+            for (let i = -1; i < 10; i++) {
+                let x = i * 100 - bgOffset;
+                ctx.fillRect(x, 365, 45, 6);
+            }
+        }
+
+        /* ==========================================================================
+           4. CONTROLS & TOUCH/GESTURE HANDLERS
+           ========================================================================== */
+        function selectCharacter(charName) {
+            player.type = charName;
+            document.getElementById('select2D').style.borderColor = charName === '2D' ? '#9dff2e' : '#4b5563';
+            document.getElementById('select2D').style.opacity = charName === '2D' ? '1' : '0.6';
+            document.getElementById('selectJulian').style.borderColor = charName === 'Julian' ? '#ff2a2a' : '#4b5563';
+            document.getElementById('selectJulian').style.opacity = charName === 'Julian' ? '1' : '0.6';
+
+            // Auto-switch jukebox track to match character
+            if (charName === '2D' && currentTrackIndex >= 3) {
+                document.getElementById('jukeboxSelect').value = "0";
+                changeTrack(0);
+            } else if (charName === 'Julian' && currentTrackIndex < 3) {
+                document.getElementById('jukeboxSelect').value = "3";
+                changeTrack(3);
+            }
+        }
+
+        function switchCharacterInRun() {
+            player.type = player.type === '2D' ? 'Julian' : '2D';
+            playSFX('switch');
+            createFloatingText(player.x, player.y - 20, `BAND: ${player.type}!`, player.type === '2D' ? '#9dff2e' : '#ff2a2a');
+        }
+
+        function handleJump() {
+            if (gameState !== 'PLAYING') return;
+            if (player.isGrounded) {
+                player.vy = player.jumpStrength;
+                player.isGrounded = false;
+                player.doubleJumpAvailable = true;
+                player.isSliding = false;
+                playSFX('jump');
+            } else if (player.doubleJumpAvailable) {
+                player.vy = player.jumpStrength * 0.9;
+                player.doubleJumpAvailable = false;
+                playSFX('doublejump');
+            }
+        }
+
+        function handleSlide(active) {
+            if (gameState !== 'PLAYING') return;
+            if (active && player.isGrounded) {
+                if (!player.isSliding) {
+                    player.isSliding = true;
+                    playSFX('slide');
+                }
+            } else if (!active) {
+                player.isSliding = false;
+            }
+        }
+
+        // Ergonomic Button Touch Handlers
+        const btnJump = document.getElementById('btnJump');
+        const btnSlide = document.getElementById('btnSlide');
+        const btnSwitch = document.getElementById('btnSwitch');
+
+        btnJump.addEventListener('pointerdown', (e) => { e.preventDefault(); handleJump(); });
+        btnSlide.addEventListener('pointerdown', (e) => { e.preventDefault(); handleSlide(true); });
+        btnSlide.addEventListener('pointerup', (e) => { e.preventDefault(); handleSlide(false); });
+        btnSlide.addEventListener('pointerleave', (e) => { e.preventDefault(); handleSlide(false); });
+        btnSwitch.addEventListener('pointerdown', (e) => { e.preventDefault(); switchCharacterInRun(); });
+
+        // Canvas Swipe Gestures
+        let touchStartY = 0;
+        canvas.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        canvas.addEventListener('touchend', (e) => {
+            const touchEndY = e.changedTouches[0].clientY;
+            const diffY = touchEndY - touchStartY;
+            if (diffY < -30) {
+                handleJump(); // Swipe up
+            } else if (diffY > 30) {
+                handleSlide(true); // Swipe down
+                setTimeout(() => handleSlide(false), 500);
+            } else if (Math.abs(diffY) < 10) {
+                handleJump(); // Tap canvas to jump
+            }
+        }, { passive: true });
+
+        // Keyboard Controls
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') { e.preventDefault(); handleJump(); }
+            else if (e.code === 'ArrowDown' || e.code === 'KeyS') { e.preventDefault(); handleSlide(true); }
+            else if (e.code === 'KeyC') { e.preventDefault(); switchCharacterInRun(); }
+        });
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowDown' || e.code === 'KeyS') handleSlide(false);
+        });
+
+        /* ==========================================================================
+           5. OBSTACLES, POWERUPS & GAME LOOP
+           ========================================================================== */
+        const OBSTACLE_TYPES = [
+            { name: 'Amp', width: 30, height: 38, y: 292, duckable: false },
+            { name: 'NYCTaxi', width: 55, height: 30, y: 300, duckable: false },
+            { name: 'Helicopter', width: 44, height: 28, y: 238, duckable: true }, // Forces Slide!
+            { name: 'ToxicBarrel', width: 32, height: 30, y: 300, duckable: false }
+        ];
+
+        let spawnTimer = 0;
+        let collectibleTimer = 0;
+
+        function spawnObstacle() {
+            if (gameState !== 'PLAYING') return;
+            const template = OBSTACLE_TYPES[Math.floor(Math.random() * OBSTACLE_TYPES.length)];
+            obstacles.push({ ...template, x: canvas.width + 40 });
+        }
+
+        function spawnCollectible() {
+            if (gameState !== 'PLAYING') return;
+            const type = Math.random() > 0.8 ? 'vip' : (Math.random() > 0.5 ? 'vinyl' : 'melodica');
+            collectibles.push({
+                type,
+                x: canvas.width + 30,
+                y: type === 'vip' ? 220 : 275,
+                width: 24, height: 24,
+                bob: Math.random() * Math.PI * 2
+            });
+        }
+
+        function startGame() {
+            unlockAudio();
+            gameState = 'PLAYING';
+            distance = 0;
+            score = 0;
+            speed = baseSpeed;
+            isEndless = false;
+            vipTimer = 0;
+            obstacles = [];
+            collectibles = [];
+            particles = [];
+            floatingTexts = [];
+            player.y = 280;
+            player.vy = 0;
+
+            document.getElementById('startOverlay').classList.add('hidden');
+            document.getElementById('gameOverOverlay').classList.add('hidden');
+            document.getElementById('victoryOverlay').classList.add('hidden');
+        }
+
+        function restartGame() { startGame(); }
+        function continueEndless() {
+            gameState = 'PLAYING';
+            isEndless = true;
+            document.getElementById('victoryOverlay').classList.add('hidden');
+        }
+
+        function triggerGameOver(reason) {
+            gameState = 'GAMEOVER';
+            playSFX('hit');
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('ps_highscore', highScore.toString());
+            }
+
+            document.getElementById('finalDistance').innerText = `${Math.floor(distance)}m`;
+            document.getElementById('finalScore').innerText = `${score} PTS`;
+            document.getElementById('highScoreText').innerText = `${highScore} PTS`;
+            document.getElementById('gameOverSub').innerText = reason;
+            document.getElementById('gameOverOverlay').classList.remove('hidden');
+        }
+
+        function triggerVictory() {
+            gameState = 'VICTORY';
+            playSFX('powerup');
+            document.getElementById('victoryOverlay').classList.remove('hidden');
+        }
+
+        function createFloatingText(x, y, text, color) {
+            floatingTexts.push({ x, y, text, color, alpha: 1.0, vy: -1.5 });
+        }
+
+        function update() {
+            if (gameState !== 'PLAYING') return;
+
+            frameCount++;
+            distance += speed * 0.08;
+            score += Math.floor(speed * 0.2);
+            speed = baseSpeed + (distance / 450);
+
+            if (vipTimer > 0) vipTimer -= 1 / 60;
+
+            // Primavera Sound 2500m Goal Check
+            if (distance >= 2500 && !isEndless) {
+                triggerVictory();
+                return;
+            }
+
+            // Player Physics
+            player.vy += player.gravity;
+            player.y += player.vy;
+
+            const groundY = player.isSliding ? 298 : 280;
+            if (player.y >= groundY) {
+                player.y = groundY;
+                player.vy = 0;
+                player.isGrounded = true;
+            }
+
+            // Spawns
+            spawnTimer++;
+            if (spawnTimer > Math.max(40, 100 - speed * 4)) {
+                spawnObstacle();
+                spawnTimer = 0;
+            }
+
+            collectibleTimer++;
+            if (collectibleTimer > 120) {
+                spawnCollectible();
+                collectibleTimer = 0;
+            }
+
+            updateBackground();
+
+            // Obstacle Collision
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let obs = obstacles[i];
+                obs.x -= speed;
+
+                const pBox = {
+                    x: player.x + 4,
+                    y: player.isSliding ? player.y + 20 : player.y + 4,
+                    width: player.width - 8,
+                    height: player.isSliding ? 20 : player.height - 8
+                };
+
+                const oBox = { x: obs.x, y: obs.y, width: obs.width, height: obs.height };
+
+                if (
+                    pBox.x < oBox.x + oBox.width &&
+                    pBox.x + pBox.width > oBox.x &&
+                    pBox.y < oBox.y + oBox.height &&
+                    pBox.y + pBox.height > oBox.y
+                ) {
+                    if (vipTimer > 0) {
+                        score += 300;
+                        playSFX('collect');
+                        createFloatingText(obs.x, obs.y, '+300 DESTROY!', '#9dff2e');
+                        obstacles.splice(i, 1);
+                    } else {
+                        triggerGameOver(`Chocaste con: ${obs.name}`);
+                        return;
+                    }
+                }
+
+                if (obs.x < -60) obstacles.splice(i, 1);
+            }
+
+            // Collectibles Pickup
+            for (let i = collectibles.length - 1; i >= 0; i--) {
+                let c = collectibles[i];
+                c.x -= speed;
+                c.bob += 0.08;
+                const cY = c.y + Math.sin(c.bob) * 4;
+
+                if (
+                    player.x < c.x + c.width &&
+                    player.x + player.width > c.x &&
+                    player.y < cY + c.height &&
+                    player.y + player.height > cY
+                ) {
+                    if (c.type === 'vip') {
+                        vipTimer = 6.0;
+                        score += 500;
+                        playSFX('powerup');
+                        createFloatingText(c.x, cY, '★ VIP INVENCIBLE! ★', '#facc15');
+                    } else {
+                        score += 150;
+                        playSFX('collect');
+                        createFloatingText(c.x, cY, '+150 PTS', c.type === 'vinyl' ? '#ff2a2a' : '#9dff2e');
+                    }
+                    collectibles.splice(i, 1);
+                } else if (c.x < -40) collectibles.splice(i, 1);
+            }
+
+            // Floating Text Update
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                let ft = floatingTexts[i];
+                ft.y += ft.vy;
+                ft.alpha -= 0.02;
+                if (ft.alpha <= 0) floatingTexts.splice(i, 1);
+            }
+        }
+
+        /* ==========================================================================
+           6. RENDERING ENGINE
+           ========================================================================== */
+        function render() {
+            drawBackground();
+
+            // Goal Stage at 2500m
+            if (distance > 2200) {
+                let stageX = canvas.width - (distance - 2200) * 3;
+                ctx.fillStyle = '#7a2cff';
+                ctx.fillRect(stageX, 150, 160, 180);
+                ctx.fillStyle = '#9dff2e';
+                ctx.font = '10px "Press Start 2P"';
+                ctx.fillText('PRIMAVERA SOUND', stageX + 10, 180);
+            }
+
+            // Obstacles
+            obstacles.forEach(obs => {
+                if (obs.name === 'Amp') {
+                    ctx.fillStyle = '#111';
+                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                    ctx.fillStyle = '#ff2a2a';
+                    ctx.fillRect(obs.x + 4, obs.y + 4, obs.width - 8, 10);
+                } else if (obs.name === 'NYCTaxi') {
+                    ctx.fillStyle = '#facc15';
+                    ctx.fillRect(obs.x, obs.y + 6, obs.width, obs.height - 6);
+                    ctx.fillStyle = '#111';
+                    ctx.fillRect(obs.x + 6, obs.y + obs.height - 4, 10, 6);
+                    ctx.fillRect(obs.x + obs.width - 16, obs.y + obs.height - 4, 10, 6);
+                } else if (obs.name === 'Helicopter') {
+                    ctx.fillStyle = '#475569';
+                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.fillRect(obs.x - 8 + (frameCount % 4) * 4, obs.y - 4, 28, 3);
+                } else {
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                    ctx.fillStyle = '#9dff2e';
+                    ctx.fillRect(obs.x + 4, obs.y + 4, obs.width - 8, 6);
+                }
+            });
+
+            // Collectibles
+            collectibles.forEach(c => {
+                const cY = c.y + Math.sin(c.bob) * 4;
+                if (c.type === 'vip') {
+                    ctx.fillStyle = '#eab308';
+                    ctx.fillRect(c.x, cY, 20, 24);
+                    ctx.fillStyle = '#000';
+                    ctx.font = '7px "Press Start 2P"';
+                    ctx.fillText('VIP', c.x + 2, cY + 14);
+                } else if (c.type === 'vinyl') {
+                    ctx.fillStyle = '#111';
+                    ctx.beginPath();
+                    ctx.arc(c.x + 10, cY + 10, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#ff2a2a';
+                    ctx.beginPath();
+                    ctx.arc(c.x + 10, cY + 10, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = '#9dff2e';
+                    ctx.fillRect(c.x, cY, 20, 12);
+                }
+            });
+
+            // Player & VIP Trail Effect
+            if (vipTimer > 0) {
+                const trailColors = ['#ff2a2a', '#9dff2e', '#7a2cff'];
+                ctx.fillStyle = trailColors[frameCount % trailColors.length];
+                ctx.fillRect(player.x - 8, player.y - 4, player.width + 16, player.height + 8);
+            }
+
+            const activeMatrix = player.type === '2D' ? sprite2D : spriteJulian;
+            const activeColors = player.type === '2D' ? colors2D : colorsJulian;
+
+            if (player.isSliding) {
+                drawPixelMatrix(ctx, activeMatrix, player.x, player.y + 16, 3, activeColors);
+            } else {
+                drawPixelMatrix(ctx, activeMatrix, player.x, player.y, 4, activeColors);
+            }
+
+            // Floating Text Overlay
+            floatingTexts.forEach(ft => {
+                ctx.fillStyle = ft.color;
+                ctx.font = '9px "Press Start 2P"';
+                ctx.globalAlpha = Math.max(0, ft.alpha);
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.globalAlpha = 1.0;
+            });
+
+            // Playing HUD Overlay
+            if (gameState === 'PLAYING') {
+                ctx.fillStyle = 'rgba(9, 10, 15, 0.75)';
+                ctx.fillRect(8, 8, 220, 50);
+                ctx.strokeStyle = '#7a2cff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(8, 8, 220, 50);
+
+                ctx.fillStyle = '#9dff2e';
+                ctx.font = '9px "Press Start 2P"';
+                ctx.fillText(`DISTANCIA: ${Math.floor(distance)}m/2500m`, 14, 25);
+                ctx.fillStyle = '#ff2a2a';
+                ctx.fillText(`PUNTAJE: ${score} PTS`, 14, 45);
+
+                if (vipTimer > 0) {
+                    ctx.fillStyle = '#facc15';
+                    ctx.fillText(`★ VIP: ${vipTimer.toFixed(1)}s`, 240, 25);
+                }
+            }
+        }
+
+        function gameLoop() {
+            update();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Live Countdown Clock
+        function updateCountdown() {
+            const festivalDate = new Date(2026, 10, 28, 0, 0, 0);
+            const diff = festivalDate - new Date();
+            if (diff <= 0) {
+                document.getElementById('countdown').innerText = "¡HOY EN VIVO!";
+                return;
+            }
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            const mins = Math.floor((diff / 1000 / 60) % 60);
+            document.getElementById('countdown').innerText = `${days}d : ${hours}h : ${mins}m`;
+        }
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+
+        window.onload = function() {
+            gameLoop();
+        };
+    </script>
+</body>
+</html>
